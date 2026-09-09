@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { serviceConfig } from '../../config/gateway.config.js';
 import { firstValueFrom } from 'rxjs';
+import { AxiosResponse } from 'axios';
 
 @Injectable()
 export class ProxyService {
@@ -40,28 +41,25 @@ export class ProxyService {
         }),
       );
       return response;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error proxying request to ${url}: ${error.message}`);
       throw error;
     }
   }
 
-  async serviceHealthCheck(
-    serviceName: keyof typeof serviceConfig,
-  ): Promise<any> {
+  async serviceHealthCheck(serviceName: keyof typeof serviceConfig) {
     try {
       const serviceUrl = serviceConfig[serviceName];
-      const response = await firstValueFrom(
-        this.httpService.get(`${serviceUrl}/health`),
-        {
-          timeout: 3000, // 3 seconds timeout for health check
-        },
+      const response: AxiosResponse<any> = await firstValueFrom(
+        this.httpService.get(`${serviceUrl}/health`, {
+          timeout: 3000, // Set a timeout for the health check request
+        }),
       );
       return {
         status: 'healthy',
         data: response.data,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         status: 'unhealthy',
         error: error.message,
