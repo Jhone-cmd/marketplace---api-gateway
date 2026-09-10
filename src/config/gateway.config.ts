@@ -8,7 +8,7 @@ export const serviceConfig = {
     timeout: 5000, // 5 seconds
   },
   checkout: {
-    url: process.env.ORDERS_SERVICE_URL || 'http://localhost:3003',
+    url: process.env.CHECKOUT_SERVICE_URL || 'http://localhost:3003',
     timeout: 5000, // 5 seconds
   },
   payments: {
