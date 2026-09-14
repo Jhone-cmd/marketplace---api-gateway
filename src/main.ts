@@ -9,9 +9,27 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: (origin: any, cb: any) => {
+      if (!origin) return cb(null, true);
+
+      const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || ['*'];
+
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Access-Control-Allow-Headers',
+      'Access-Control-Allow-Methods',
+    ],
   });
 
   app.useGlobalPipes(
