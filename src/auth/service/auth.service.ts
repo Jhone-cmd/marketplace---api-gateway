@@ -1,6 +1,20 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { serviceConfig } from '../../config/gateway.config.js';
+import { firstValueFrom } from 'rxjs';
+
+export interface UserSession {
+    valid: boolean;
+    user: {
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        roles: string;
+        status: string;
+    } | null;
+}
 
 @Injectable()
 export class AuthService {
@@ -13,7 +27,19 @@ export class AuthService {
             throw new UnauthorizedException('Invalid JWT token');
         }
     }
-    validateSessionToken() { }
+
+    async validateSessionToken(sessionToken: string): Promise<UserSession> {
+        try {
+            const { data } = await firstValueFrom(
+                this.httpService.get<UserSession>(`${serviceConfig.users.url}/sessions/validate/${sessionToken}`, {
+                    timeout: serviceConfig.users.timeout,
+                }));
+            return data;
+        } catch (error) {
+            throw new UnauthorizedException('Invalid Session token');
+        }
+    }
+
     login() { }
     register() { }
 }
