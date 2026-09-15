@@ -6,6 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ProxyModule } from './proxy/proxy.module.js';
 import { MiddlewareModule } from './middleware/middleware.module.js';
 import { LoggingMiddleware } from './middleware/logging/logging.middleware.js';
+import { AuthModule } from './auth/auth.module.js';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { LoggingMiddleware } from './middleware/logging/logging.middleware.js';
     ]),
     ProxyModule,
     MiddlewareModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
