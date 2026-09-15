@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { serviceConfig } from '../../config/gateway.config.js';
 import { firstValueFrom } from 'rxjs';
+import constants from 'node:constants';
 
 export interface UserSession {
     valid: boolean;
@@ -40,6 +41,17 @@ export class AuthService {
         }
     }
 
-    login() { }
+    async login(loginDto: { email: string; password: string }) {
+        try {
+            const { data } = await firstValueFrom(
+                this.httpService.post(`${serviceConfig.users.url}/login`, loginDto, {
+                    timeout: serviceConfig.users.timeout,
+                }));
+            return data;
+        } catch (error) {
+            throw new UnauthorizedException('Invalid login credentials');
+        }
+    }
+
     register() { }
 }
