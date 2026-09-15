@@ -53,5 +53,15 @@ export class AuthService {
         }
     }
 
-    register() { }
+    async register(registerDto: any) {
+        try {
+            const { data } = await firstValueFrom(
+                this.httpService.post(`${serviceConfig.users.url}/auth/register`, registerDto, {
+                    timeout: serviceConfig.users.timeout,
+                }));
+            return data;
+        } catch (error) {
+            throw new UnauthorizedException('Registration failed');
+        }
+    }
 }
