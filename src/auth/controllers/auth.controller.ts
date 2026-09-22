@@ -15,4 +15,14 @@ export class AuthController {
     async login(@Body() loginDto: { email: string; password: string }) {
         return this.authService.login(loginDto);
     }
+
+
+    @Post("register")
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ summary: "User registration" })
+    @ApiResponse({ status: 201, description: "Registration successfully" })
+    @ApiResponse({ status: 400, description: "Invalid registration data" })
+    async register(@Body() registerDto: any) {
+        return this.authService.register(registerDto);
+    }
 }
