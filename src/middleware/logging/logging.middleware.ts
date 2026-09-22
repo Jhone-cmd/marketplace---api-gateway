@@ -21,6 +21,12 @@ export class LoggingMiddleware implements NestMiddleware {
       this.logger.log(
         `Outgoing response: ${method} ${originalUrl} - ${statusCode} - ${contentLength || 0}b - ${userAgent} ${ip} - ${responseTime}ms`,
       );
+
+      if (statusCode >= 400) {
+        this.logger.error(
+          `Error response: ${method} ${originalUrl} - ${statusCode} - ${contentLength || 0}b - ${userAgent} ${ip} - ${responseTime}ms`,
+        );
+      }
     });
 
     // Log de errors
