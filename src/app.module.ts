@@ -7,6 +7,8 @@ import { ProxyModule } from './proxy/proxy.module.js';
 import { MiddlewareModule } from './middleware/middleware.module.js';
 import { LoggingMiddleware } from './middleware/logging/logging.middleware.js';
 import { AuthModule } from './auth/auth.module.js';
+import { APP_GUARD } from '@nestjs/core';
+import { CustomThrottlerGuard } from './guards/throttler.guard.js';
 
 @Module({
   imports: [
@@ -39,7 +41,7 @@ import { AuthModule } from './auth/auth.module.js';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: CustomThrottlerGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
