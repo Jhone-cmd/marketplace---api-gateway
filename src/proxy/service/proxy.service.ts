@@ -4,19 +4,27 @@ import { serviceConfig } from '../../config/gateway.config.js';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 
+type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch';
+
+interface UserInfo {
+  userId: string;
+  email: string;
+  role: string;
+}
+
 @Injectable()
 export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   async proxyRequest(
     serviceName: keyof typeof serviceConfig,
     method: string,
     path: string,
-    data?: any,
-    userInfo?: any,
-    headers?: any,
+    data?: unknown,
+    userInfo?: UserInfo,
+    headers?: Record<string, string>,
   ) {
     const serviceUrl = serviceConfig[serviceName];
     const url = `${serviceUrl}${path}`;
@@ -26,14 +34,14 @@ export class ProxyService {
     try {
       const enhancedHeaders = {
         ...headers,
-        'x-user-id': userInfo?.id,
+        'x-user-id': userInfo?.userId,
         'x-user-email': userInfo?.email,
         'x-user-role': userInfo?.role,
       };
 
       const response = await firstValueFrom(
         this.httpService.request({
-          method: method.toLowerCase() as any,
+          method: method.toLowerCase() as HttpMethod,
           url,
           data,
           headers: enhancedHeaders,
