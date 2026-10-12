@@ -37,9 +37,9 @@ export class CircuitBreakerService {
 
         try {
             const result = await operation()
-            this.onSucess(circuit, key)
-
+            this.onSuccess(circuit, key);
             return result
+
         } catch (error: Error | any) {
             this.onFailure(circuit, key)
             this.logger.error(`Circuit breaker failure for ${key}:`, error.message)
@@ -67,5 +67,24 @@ export class CircuitBreakerService {
         }
 
         return this.circuits.get(key)!;
+    }
+
+    private onSuccess(circuit: CircuitBreakerState, key: string) {
+        circuit.failureCount = 0
+        circuit.state = CircuitBreakerStateEnum.CLOSED
+        this.logger.debug(`Circuit breaker Success: CLOSED for ${key}`)
+    }
+
+    private onFailure(circuit: CircuitBreakerState, key: string) {
+        circuit.failureCount++
+        circuit.lastFailureTime = Date.now()
+
+        if (circuit.failureCount >= this.defaultOptions.failureThreshold) {
+            circuit.state = CircuitBreakerStateEnum.OPEN
+            circuit.nextAttemptTime = Date.now() + this.defaultOptions.resetTimeout
+            this.logger.warn(`Circuit breaker OPEN for ${key}`)
+        } else {
+            this.logger.warn(`Circuit breaker failure count for ${key}: ${circuit.failureCount}`)
+        }
     }
 }
