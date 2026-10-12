@@ -69,13 +69,13 @@ export class CircuitBreakerService {
         return this.circuits.get(key)!;
     }
 
-    private onSuccess(circuit: CircuitBreakerState, key: string) {
+    private onSuccess(circuit: CircuitBreakerState, key: string): void {
         circuit.failureCount = 0
         circuit.state = CircuitBreakerStateEnum.CLOSED
         this.logger.debug(`Circuit breaker Success: CLOSED for ${key}`)
     }
 
-    private onFailure(circuit: CircuitBreakerState, key: string) {
+    private onFailure(circuit: CircuitBreakerState, key: string): void {
         circuit.failureCount++
         circuit.lastFailureTime = Date.now()
 
@@ -85,6 +85,23 @@ export class CircuitBreakerService {
             this.logger.warn(`Circuit breaker OPEN for ${key}`)
         } else {
             this.logger.warn(`Circuit breaker failure count for ${key}: ${circuit.failureCount}`)
+        }
+    }
+
+    getCircuitState(key: string): CircuitBreakerState | undefined {
+        return this.circuits.get(key)
+    }
+
+    getAllCircuitStates(): Map<string, CircuitBreakerState> {
+        return new Map(this.circuits)
+    }
+
+    resetCircuit(key: string): void {
+        if (this.circuits.has(key)) {
+            this.circuits.delete(key)
+            this.logger.log(`Circuit breaker reset for ${key}`)
+        } else {
+            this.logger.warn(`No circuit breaker found for ${key} to reset`)
         }
     }
 }
