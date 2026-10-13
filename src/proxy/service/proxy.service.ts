@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { serviceConfig } from '../../config/gateway.config.js';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { CircuitBreakerService } from '../../common/circuit-breaker/circuit-breaker.service.js';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch';
 
@@ -16,7 +17,7 @@ interface UserInfo {
 export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
 
-  constructor(private readonly httpService: HttpService) { }
+  constructor(private readonly httpService: HttpService, private readonly circuitBreaker: CircuitBreakerService) { }
 
   async proxyRequest(
     serviceName: keyof typeof serviceConfig,
@@ -31,28 +32,34 @@ export class ProxyService {
 
     this.logger.log(`Proxying request to ${url} with method ${method}`);
 
-    try {
-      const enhancedHeaders = {
-        ...headers,
-        'x-user-id': userInfo?.userId,
-        'x-user-email': userInfo?.email,
-        'x-user-role': userInfo?.role,
-      };
+    return this.circuitBreaker.executeWithCircuitBreaker(
+      `proxy-${serviceName}`,
+      async () => {
+        const enhancedHeaders = {
+          ...headers,
+          'x-user-id': userInfo?.userId,
+          'x-user-email': userInfo?.email,
+          'x-user-role': userInfo?.role,
+        };
 
-      const response = await firstValueFrom(
-        this.httpService.request({
-          method: method.toLowerCase() as HttpMethod,
-          url,
-          data,
-          headers: enhancedHeaders,
-          timeout: serviceUrl.timeout || 5000, // Set a default timeout if not specified
-        }),
-      );
-      return response;
-    } catch (error: any) {
-      this.logger.error(`Error proxying request to ${url}: ${error.message}`);
-      throw error;
-    }
+        const response = await firstValueFrom(
+          this.httpService.request({
+            method: method.toLowerCase() as HttpMethod,
+            url,
+            data,
+            headers: enhancedHeaders,
+            timeout: serviceUrl.timeout || 5000, // Set a default timeout if not specified
+          }),
+        );
+        return response;
+      },
+
+      () => {
+        this.logger.error(`${serviceName} service is currently unavailable. Please try again later. `);
+        throw new Error(`${serviceName} service is currently unavailable. Please try again later. `);
+      },
+      { failureThreshold: 3, timeout: 30000, resetTimeout: 30000 }
+    )
   }
 
   async serviceHealthCheck(serviceName: keyof typeof serviceConfig) {
