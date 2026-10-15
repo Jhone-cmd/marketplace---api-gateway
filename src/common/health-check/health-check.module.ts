@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
-
-@Module({})
-export class HealthCheckModule {}
+import { HealthCheckService } from './health-check.service.js';
+@Module({
+    providers: [HealthCheckService],
+    exports: [HealthCheckService],
+})
+export class HealthCheckModule { }

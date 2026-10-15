@@ -58,5 +58,44 @@ export class HealthCheckService {
             this.logger.error(`Error checking health of service ${serviceName}: ${error.message}`);
         }
     }
+
+    async checkAllServicesHealth(): Promise<ServiceHealthCheck[]> {
+        const services: (keyof typeof serviceConfig)[] = [
+            'users',
+            'products',
+            'checkout',
+            'payments',
+        ]
+
+        const healthChecks = await Promise.allSettled(services.map(serviceName => this.checkServiceHealth(serviceName)));
+
+        return healthChecks.map((result, index) => {
+            if (result.status === 'fulfilled') {
+                return result.value as ServiceHealthCheck;
+            } else {
+                const serviceName = services[index];
+                const service = serviceConfig[serviceName];
+                const serviceHealth: ServiceHealthCheck = {
+                    name: serviceName,
+                    url: service.url,
+                    status: HealthCheckStatus.UNHEALTHY,
+                    responseTime: 0,
+                    lastCheck: new Date(),
+                    error: result.reason?.message || 'Unknown error',
+                };
+
+                this.logger.error(`Error checking health of service ${serviceName}: ${serviceHealth.error}`);
+                return serviceHealth;
+            }
+        });
+    }
+
+    getCachedHealth(serviceName: string): ServiceHealthCheck | undefined {
+        return this.healthCache.get(serviceName);
+    }
+
+    getAllCachedHealth(): ServiceHealthCheck[] {
+        return Array.from(this.healthCache.values());
+    }
 }
 
