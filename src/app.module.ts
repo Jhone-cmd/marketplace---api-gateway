@@ -10,7 +10,9 @@ import { AuthModule } from './auth/auth.module.js';
 import { APP_GUARD } from '@nestjs/core';
 import { CustomThrottlerGuard } from './guards/throttler.guard.js';
 import { HealthCheckModule } from './common/health-check/health-check.module.js';
-import { HealthCheckService } from './common/health-check.service.js';
+import { HealthModule } from './health/health.module.js';
+import { CircuitBreakerModule } from './common/circuit-breaker/circuit-breaker.module.js';
+import { FallbackModule } from './common/fallback/fallback.module.js';
 
 @Module({
   imports: [
@@ -41,10 +43,13 @@ import { HealthCheckService } from './common/health-check.service.js';
     ProxyModule,
     MiddlewareModule,
     AuthModule,
-    HealthCheckModule,
+    HealthModule,
+    CircuitBreakerModule,
+    FallbackModule,
+    HealthCheckModule
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: CustomThrottlerGuard }, HealthCheckService],
+  providers: [AppService, { provide: APP_GUARD, useClass: CustomThrottlerGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
