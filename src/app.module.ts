@@ -44,9 +44,9 @@ import { FallbackModule } from './common/fallback/fallback.module.js';
     MiddlewareModule,
     AuthModule,
     HealthModule,
+    HealthCheckModule,
     CircuitBreakerModule,
     FallbackModule,
-    HealthCheckModule
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: CustomThrottlerGuard }],

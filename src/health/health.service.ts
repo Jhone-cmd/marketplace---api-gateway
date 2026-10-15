@@ -24,7 +24,7 @@ export class HealthService {
         let hasUnhealthyServices = false;
 
         healthChecks.forEach((serviceHealth) => {
-            results.services[serviceHealth.name] = {
+            results.services = {
                 name: serviceHealth.name,
                 status: serviceHealth.status,
                 responseTime: serviceHealth.responseTime,
