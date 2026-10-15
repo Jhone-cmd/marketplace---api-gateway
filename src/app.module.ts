@@ -9,6 +9,8 @@ import { LoggingMiddleware } from './middleware/logging/logging.middleware.js';
 import { AuthModule } from './auth/auth.module.js';
 import { APP_GUARD } from '@nestjs/core';
 import { CustomThrottlerGuard } from './guards/throttler.guard.js';
+import { HealthCheckModule } from './common/health-check/health-check.module.js';
+import { HealthCheckService } from './common/health-check.service.js';
 
 @Module({
   imports: [
@@ -39,9 +41,10 @@ import { CustomThrottlerGuard } from './guards/throttler.guard.js';
     ProxyModule,
     MiddlewareModule,
     AuthModule,
+    HealthCheckModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: CustomThrottlerGuard }],
+  providers: [AppService, { provide: APP_GUARD, useClass: CustomThrottlerGuard }, HealthCheckService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
