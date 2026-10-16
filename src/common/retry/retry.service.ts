@@ -1,0 +1,59 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { RetryOptions, RetryResult } from './retry.interface.js';
+
+@Injectable()
+export class RetryService {
+    private readonly logger = new Logger(RetryService.name);
+
+    private readonly defaultOptions: RetryOptions = {
+        maxRetries: 3,
+        baseDelay: 1000,
+        maxDelay: 30000,
+        backoffMultiplier: 2,
+        jitter: true,
+    };
+
+    async executeWithRetry<T>(operation: () => Promise<T>, options?: Partial<RetryOptions>): Promise<RetryResult<T>> {
+        const config = { ...this.defaultOptions, ...options };
+        const startTime = Date.now();
+        let lastError: Error;
+
+        for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+            try {
+                this.logger.debug(`Attempt ${attempt + 1}/${config.maxRetries + 1}`);
+                const data = await operation();
+                const totalTime = Date.now() - startTime;
+
+                this.logger.log(`Operation succeeded after ${attempt + 1} attempts in ${totalTime}ms`);
+
+                return { success: true, data, attempts: attempt + 1, totalTime };
+            } catch (error) {
+                lastError = error as Error;
+                this.logger.warn(`Attempt ${attempt + 1} failed: ${lastError.message}`);
+
+                if (attempt < config.maxRetries) {
+                    const delay = this.calculateDelay(attempt, config);
+                    this.logger.debug(`Waiting for ${delay}ms before next attempt`);
+                    await this.delay(delay);
+                }
+            }
+        }
+
+        const totalTime = Date.now() - startTime;
+        this.logger.error(`All ${config.maxRetries + 1} attempts in ${totalTime}ms: ${lastError!.message}`);
+        return { success: false, error: lastError!, attempts: config.maxRetries + 1, totalTime };
+    }
+
+    private calculateDelay(attempt: number, config: RetryOptions): number {
+        let delay = config.baseDelay * Math.pow(config.backoffMultiplier, attempt);
+
+        if (config.jitter) {
+            delay = delay * (0.5 + Math.random() * 0.5); // Randomize delay between 50% and 100% of the calculated delay
+        }
+        return Math.min(delay, config.maxDelay);
+    }
+
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
