@@ -13,6 +13,7 @@ import { HealthCheckModule } from './common/health-check/health-check.module.js'
 import { HealthModule } from './health/health.module.js';
 import { CircuitBreakerModule } from './common/circuit-breaker/circuit-breaker.module.js';
 import { FallbackModule } from './common/fallback/fallback.module.js';
+import { TimeoutModule } from './common/timeout/timeout.module.js';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { FallbackModule } from './common/fallback/fallback.module.js';
     HealthCheckModule,
     CircuitBreakerModule,
     FallbackModule,
+    TimeoutModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: CustomThrottlerGuard }],
